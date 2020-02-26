@@ -7,13 +7,19 @@ from scipy import ndimage
 photoFileName = "image"
 photoFolderName = "imageData"
 
+# turns the list of pixels in to an numpy matrix dependant on the size of the image
+
+#returns the matrix of pixels
 def toMatrix(im, l):
     width, height = im.size
     mat = np.array(l).reshape(height, width)
     return mat
 
-def toGreyScale(pixels):
+# changes the values of the pixels depending on their brightness.
+# the writing will be black and the background will be white
 
+#returns the list of changed pixles
+def toGreyScale(pixels):
     for x in range(len(pixels)):
         if pixels[x] > 110:
             pixels[x] = 0
@@ -23,20 +29,29 @@ def toGreyScale(pixels):
     return pixels
 
 
+# splits the image in to its individual characters. (Still has a black border around in some cases)
+#input => the original black and white image,
+#         the x starting position to make sure the photo is correctly cropped
+
+# returns an image of a single character.
 def splitImage(im, startPos):
     width, height = im.size
     heightImage = []
     cropImage = []
-    flag = False
+    flag = False # flag turns true when the script has scanned over a single image.
 
-    im = im.crop((startPos, 0, width, height))
+    im = im.crop((startPos, 0, width, height)) # crops image depending on startPos
 
     pixels = toMatrix(im, list(im.getdata()))
 
+# looking at the sum of each row of the image. If sum is == 0 then there is no image
+# so can ignore that part of the image. Its only interested when there is writing, and when
+# there is, it will store the row in a new list. (heightImage)
     for x in range(len(pixels)):
         if sum(pixels[x]) != 0:
             heightImage.append(pixels[x])
 
+# flip the image so we can use the same algorithm for looking at each row of the image.
     pixels = np.asarray(heightImage)
     pixels = pixels.T
 
@@ -45,7 +60,7 @@ def splitImage(im, startPos):
             cropImage.append(pixels[x])
             flag = True
         elif sum(pixels[x]) == 0 and flag == True:
-            cord = x
+            cord = x #
             break
 
     cropImage = np.asarray(cropImage)
@@ -153,10 +168,9 @@ def handWrittenNumberData():
     # for x in range(len(images)):
     #     images[x].save('imageRecognition' + '/' + photoFolderName + '/' + 'formattedImages' +
     #         '/' + 'formattedImage' + str(x) + '.png')
-
     imagesPixels = []
     for image in images:
-        # image.show()
+        image.show()
         imagesPixels.append(list(image.getdata()))
 
 

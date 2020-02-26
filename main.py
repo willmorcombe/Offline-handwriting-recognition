@@ -79,7 +79,7 @@ def test():
 
 
 
-nn = NeuralNetwork(784,[100,50],10, 0.1)
+nn = NeuralNetwork(784,[100],10, 0.1)
 
 if doSave:
 
@@ -91,10 +91,14 @@ if doSave:
     bestResult = 0
     # remember to randomise the 2d array when going over another epoch!!!!!!!!!
     while not trained:
+        oldPercent = 0
         for x in range(len(data)):
             inputs = norm(data[x])
             targets = toTargets(labels[x])
-            print(int(x/len(data) * 100))
+            percent = int(x/len(data) * 100)
+            if percent > oldPercent:
+                oldPercent = percent
+                print(percent)
             nn.train(inputs, targets)
 
         newResult = test()
