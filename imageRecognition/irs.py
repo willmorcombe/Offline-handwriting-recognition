@@ -7,6 +7,10 @@ from scipy import ndimage
 photoFileName = "image"
 photoFolderName = "imageData"
 
+def toMatrix(im, l):
+    width, height = im.size
+    mat = np.array(l).reshape(width, height)
+    return mat
 
 def toGreyScale(im, pixels):
     newPixels = []
@@ -29,43 +33,38 @@ def toGreyScale(im, pixels):
     return newPixels
 
 
-def croppedImage(im, pixels):
+def croppedImage(im, startPos):
     width, height = im.size
-    left = 0
-    top = 0
-    right = width
-    bottom = height
+    heightImage = []
+    cropImage = []
+    flag = False
 
-    for i in range(width):
-        for j in range(height):
-            if pixels[j][i] != 0:
-                left = i
-                break
-        else:
-            continue
-        break
+    im = im.crop((0, 0, width, height))
 
-    for i in range(height):
-        for j in range(width):
-            if pixels[i][j] != 0:
-                top = i
-                break
-        else:
-            continue
-        break
+    pixels = toGreyScale(im, list(im.getdata()))
 
-    for i in range(width):
-        for j in range(height):
-            if pixels[j][i] != 0:
-                right = i
+    for x in range(len(pixels)):
+        if sum(pixels[x]) != 0:
+            heightImage.append(pixels[x])
 
-    for i in range(height):
-        for j in range(width):
-            if pixels[i][j] != 0:
-                bottom = i
+    pixels = np.asarray(heightImage)
+    pixels = pixels.T
 
-    im = im.crop((left, top, right, bottom))
-    return im
+    for x in range(len(pixels)):
+        if sum(pixels[x]) != 0:
+            cropImage.append(pixels[x])
+            flag = True
+        elif sum(pixels[x]) == 0 and flag == True:
+            cord = x
+            break
+
+    cropImage = np.asarray(cropImage)
+    cropImage = np.rot90(cropImage, 0).T
+
+    im = Image.fromarray(cropImage)
+
+    return (im, x)
+
 
 def getCenterOfMassShift(im):
     cy,cx = ndimage.measurements.center_of_mass(im)
@@ -89,15 +88,26 @@ def handWrittenNumberData():
 
     im = Image.open('imageRecognition' + '/' + photoFolderName + "/" + photoFileName + ".jpg").convert('L')
     pixels = list(im.getdata())
+    #turns the list of pixelsto a matrix of pixels
+    # pixels = toMatrix(im, list(im.getdata()))
 
     pixels = toGreyScale(im, pixels)
     array = np.array(pixels, dtype=np.uint8)
     formatted = Image.fromarray(array)
     #image is now black and white.
 
+    pixelStartPos = 0
+    images = []
 
-    im = croppedImage(formatted, pixels)
-    im.show()
+    for x in range(3):
+        im, pixelStartPos = croppedImage(formatted, pixelStartPos)
+        im.show()
+        images.append(im)
+        print(x)
+
+    images[0].show()
+    images[1].show()
+    images[2].show()
     #image is cropped to remove black rows and columns
 
     rows, cols = im.size
