@@ -119,9 +119,12 @@ if doTest:
 
 
 print('computing number... ')
-inputs = norm(irs.handWrittenNumberData())
+inputs = irs.handWrittenNumberData()
 
-guess = nn.guess(inputs)
-print(whatNumber(guess))
+for image in inputs:
+
+    normInput = norm(image)
+    guess = nn.guess(normInput)
+    print(whatNumber(guess))
 
 
