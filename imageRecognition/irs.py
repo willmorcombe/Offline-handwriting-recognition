@@ -33,7 +33,7 @@ def toGreyScale(pixels):
 #input => the original black and white image,
 #         the x starting position to make sure the photo is correctly cropped
 
-# returns an image of a single character.
+# returns an image of a single character and an integer for cropping.
 def splitImage(im, startPos):
     width, height = im.size
     heightImage = []
@@ -60,11 +60,13 @@ def splitImage(im, startPos):
             cropImage.append(pixels[x])
             flag = True
         elif sum(pixels[x]) == 0 and flag == True:
-            cord = x #
+            cord = x #the x position of the image to use for later cropping
             break
 
     cropImage = np.asarray(cropImage)
 
+# conditional for checking if there isn't a character in the image.
+#(there may be a black dot on the screen hence the sum of 1000)
     if cropImage.sum() < 1000:
         return (0, 0)
     else:
@@ -72,6 +74,11 @@ def splitImage(im, startPos):
         im = Image.fromarray(cropImage)
         return (im, x)
 
+# trims the cropped image to fit in a 20 x 20 box.
+# returns the cropped image
+
+# uses same algorithm of using the sums of each column to see if there is a pixel there.
+#returns the cropped image
 def trimImage(im):
     heightImage = []
     cropImage = []
@@ -141,40 +148,46 @@ def handWrittenNumberData():
 
     #images are cropped to remove black rows and columns
 
-    for x in range(len(images)):
-        rows, cols = images[x].size
-        if rows > cols:
-            factor = 20.0/rows
-            rows = 20
-            cols = int(round(cols*factor))
-            images[x] = images[x].resize((rows, cols))
-        else:
-            factor = 20.0/cols
-            cols = 20
-            rows = int(round(rows*factor))
-            images[x] = images[x].resize((rows, cols))
+    try:
 
-        colsPadding = (int(math.ceil((28-cols)/2.0)), int(math.floor((28-cols)/2.0)))
-        rowsPadding = (int(math.ceil((28-rows)/2.0)), int(math.floor((28-rows)/2.0)))
-
-        pixelArray = np.lib.pad(images[x], (colsPadding, rowsPadding), 'constant')
-        images[x] = Image.fromarray(pixelArray)
-        shiftTuple = getCenterOfMassShift(pixelArray)
-        shiftedImage = shift(images[x], shiftTuple)
-        images[x] = shiftedImage
+        for x in range(len(images)):
+            rows, cols = images[x].size
+            if rows > cols:
+                factor = 20.0/rows
+                rows = 20
+                cols = int(round(cols*factor))
+                images[x] = images[x].resize((rows, cols))
+            else:
+                factor = 20.0/cols
+                cols = 20
+                rows = int(round(rows*factor))
+                images[x] = images[x].resize((rows, cols))
 
 
+            colsPadding = (int(math.ceil((28-cols)/2.0)), int(math.floor((28-cols)/2.0)))
+            rowsPadding = (int(math.ceil((28-rows)/2.0)), int(math.floor((28-rows)/2.0)))
 
-    # for x in range(len(images)):
-    #     images[x].save('imageRecognition' + '/' + photoFolderName + '/' + 'formattedImages' +
-    #         '/' + 'formattedImage' + str(x) + '.png')
-    imagesPixels = []
-    for image in images:
-        image.show()
-        imagesPixels.append(list(image.getdata()))
+            pixelArray = np.lib.pad(images[x], (colsPadding, rowsPadding), 'constant')
+            images[x] = Image.fromarray(pixelArray)
+            shiftTuple = getCenterOfMassShift(pixelArray)
+            shiftedImage = shift(images[x], shiftTuple)
+            images[x] = shiftedImage
+
+        # for x in range(len(images)):
+        #     images[x].save('imageRecognition' + '/' + photoFolderName + '/' + 'formattedImages' +
+        #         '/' + 'formattedImage' + str(x) + '.png')
+        imagesPixels = []
+        for image in images:
+            image.show()
+            imagesPixels.append(list(image.getdata()))
 
 
-    return imagesPixels
+        return imagesPixels
+
+    except:
+        print("the photo quality wasn't good enough to read try again...")
+
+        return 0
 
 
 

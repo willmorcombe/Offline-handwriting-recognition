@@ -162,7 +162,7 @@ class NeuralNetwork:
 
     def train(self, inputs, targets):
         # the main training function
-
+        self.iterationList[1] = 0
         #converting inputs to a matrix
         self.initialInputs = inputs
         inputs = self.toMatrix('i')
@@ -193,6 +193,7 @@ class NeuralNetwork:
         self.newWeights = []
         self.newBias = []
         self.outputs = []
+
 
 
     def feedForward(self, inputs):

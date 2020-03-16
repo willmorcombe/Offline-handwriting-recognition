@@ -10,14 +10,14 @@ from NeuralNetwork import NeuralNetwork
 
 t = [(0,0,0), (1,0,1), (0,1,1), (1,1,0)]
 inputNodes = 2
-hiddenNodes = [5]
+hiddenNodes = [10]
 outputNode = 1
 learningRate = 0.1
 trainingCycles = 20000
 
 nn = NeuralNetwork(inputNodes, hiddenNodes, outputNode, learningRate)
 
-
+print(nn.derivSigmoid(0.12))
 for x in range(trainingCycles):
     r = random.randint(0,3)
     inputs = [t[r][0], t[r][1]]

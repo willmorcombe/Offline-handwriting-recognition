@@ -1,21 +1,21 @@
-import gettingData
 import sys
 import numpy as np
 from os import path
+import emnist
 
 
 from PIL import Image
 
 path = sys.path[0]
 
-sys.path.append('../NN v3')
+sys.path.append('NN v3')
 sys.path.append('%s/imageRecognition' % (path))
-sys.path.append('../../email downloader')
+
 from NeuralNetwork import NeuralNetwork
 import irs
 
 
-filename = "digitClassifierState"
+filename = "letterClassiferModel"
 foldername = "weights and labels data"
 doSave = False
 doTest = False
@@ -31,71 +31,53 @@ def norm(data):
 
 
 def toTargets(label):
-    targets = [0] * 10
-    targets[label] = 1
+    targets = [0] * 26
+    targets[label - 1] = 1
     return targets
 
-
-
-def whatNumber(g):
+def whatIndex(g):
     return np.argmax(g)
 
+def indexToChar(index):
+    return chr(index + 97)
 
 def test():
 
-    images_filename = "%s/data/t10k-images.idx3-ubyte" % (path)
-    labels_filename = "%s/data/t10k-labels.idx1-ubyte" % (path)
-    data, labels = gettingData.getData(images_filename, labels_filename)
+    testData, testLabels = emnist.extract_test_samples('letters')
+    # import testing data from emnist
+    # call them data and labels
 
-
-    # newPixels = []
-    # counter = 0
-
-    # for i in range(28):
-    #     subList = []
-    #     for j in range(28):
-    #         pixelVal = data[23][counter]
-    #         subList.append(pixelVal)
-    #         counter += 1
-    #     newPixels.append(subList)
-
-    # array = np.array(newPixels, dtype=np.uint8)
-    # formatted = Image.fromarray(array)
-    # formatted.show()
-    # print(labels[23])
 
     correct = 0
-    for x in range(len(data)):
-        inputs = norm(data[x])
+    for x in range(testData.shape[0]):
+        inputs = norm(np.ndarray.flatten(testData[x]))
         guess = nn.guess(inputs)
-        print("the number was: " + str(labels[x]))
-        guess = whatNumber(guess)
+        print("the number was: " + str(testLabels[x]))
+        guess = whatIndex(guess) + 1
         print("it guessed it was :" + str(guess))
-        if guess == labels[x]:
+        if guess == testLabels[x]:
             correct += 1
 
     # print("it correctly predicted " + str(correct / len(data) * 100) + "%")
-    return (correct / len(data) * 100)
+    return (correct / testData.shape[0] * 100)
 
 
 
-nn = NeuralNetwork(784,[100],10, 0.1)
+nn = NeuralNetwork(784,[100],26, 0.1)
 
 if doSave:
 
-    images_filename = "%s/data/train-images.idx3-ubyte" % (path)
-    labels_filename = "%s/data/train-labels.idx1-ubyte" % (path)
-    data, labels = gettingData.getData(images_filename, labels_filename)
+    trainingData, trainingLabels = emnist.extract_training_samples('letters')
 
     trained = False
     bestResult = 0
     # remember to randomise the 2d array when going over another epoch!!!!!!!!!
     while not trained:
         oldPercent = 0
-        for x in range(len(data)):
-            inputs = norm(data[x])
-            targets = toTargets(labels[x])
-            percent = int(x/len(data) * 100)
+        for x in range(trainingData.shape[0]):
+            inputs = norm(np.ndarray.flatten(trainingData[x]))
+            targets = toTargets(trainingLabels[x])
+            percent = int(x/trainingData.shape[0] * 100)
             if percent > oldPercent:
                 oldPercent = percent
                 print(percent)
@@ -117,18 +99,22 @@ nn.loadState(filename)
 if doTest:
     test()
 
-# images_filename = "%s/data/t10k-images.idx3-ubyte" % (path)
-# labels_filename = "%s/data/t10k-labels.idx1-ubyte" % (path)
-# data, labels = gettingData.getData(images_filename, labels_filename)
 
-
-print('computing number... ')
+print('working...')
 inputs = irs.handWrittenNumberData()
 
-for image in inputs:
+lettersArray = []
+if inputs != 0:
+    for image in inputs:
 
-    normInput = norm(image)
-    guess = nn.guess(normInput)
-    print(whatNumber(guess))
+        normInput = norm(image)
+        guess = nn.guess(normInput)
+        indexValue = whatIndex(guess)
+        lettersArray.append(indexToChar(indexValue))
+
+with open("Finished Text", "w") as file:
+    for letter in lettersArray:
+        file.write(letter)
+
 
 
