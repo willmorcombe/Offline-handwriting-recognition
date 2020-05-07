@@ -104,13 +104,17 @@ print('working...')
 inputs = irs.handWrittenNumberData()
 
 lettersArray = []
-if inputs != 0:
+if inputs != None:
     for image in inputs:
-
-        normInput = norm(image)
-        guess = nn.guess(normInput)
-        indexValue = whatIndex(guess)
-        lettersArray.append(indexToChar(indexValue))
+        if image == "space":
+            lettersArray.append(" ")
+        elif image == "para":
+            lettersArray.append('\n')
+        else:
+            normInput = norm(image)
+            guess = nn.guess(normInput)
+            indexValue = whatIndex(guess)
+            lettersArray.append(indexToChar(indexValue))
 
 with open("Finished Text", "w") as file:
     for letter in lettersArray:

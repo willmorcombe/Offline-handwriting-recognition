@@ -21,12 +21,42 @@ def toMatrix(im, l):
 #returns the list of changed pixles
 def toGreyScale(pixels):
     for x in range(len(pixels)):
-        if pixels[x] > 80:
+        if pixels[x] > 100:
             pixels[x] = 0
         else:
             pixels[x] = 255
 
     return pixels
+
+def getLine(im, startPos):
+    width, height = im.size
+    lineImage = []
+    cropImage = []
+    endPos = 0
+    flag = False # flag turns true when the script has scanned over a single image.
+
+    im = im.crop((0, startPos, width, height))
+    im.show()
+    pixels = toMatrix(im, list(im.getdata()))
+
+    if sum(sum(pixels)) < 100_000:
+        return (0, 0)
+
+    for x in range(len(pixels)):
+        if sum(pixels[x]) != 0:
+            lineImage.append(pixels[x])
+            flag = True
+        elif sum(pixels[x]) == 0 and flag == True:
+            endPos = x
+            break
+
+
+    line = np.asarray(lineImage)
+    if line.sum() < 100_000:
+        return (1, endPos)
+    else:
+        im = Image.fromarray(line)
+        return (im, endPos)
 
 
 # splits the image in to its individual characters. (Still has a black border around in some cases)
@@ -45,8 +75,8 @@ def splitImage(im, startPos):
     pixels = toMatrix(im, list(im.getdata()))
     p = np.asarray(pixels)
     im = Image.fromarray(p)
-    im.show()
-    if p.sum() < 5000:
+    # im.show()
+    if p.sum() < 100_000:
         return (0, 0)
 
 # looking at the sum of each row of the image. If sum is == 0 then there is no image
@@ -70,10 +100,9 @@ def splitImage(im, startPos):
 
     cropImage = np.asarray(cropImage)
 # conditional for checking if there isn't a character in the image.
-#(there may be a black dot on the screen hence the sum of 1000)\
-
-    if cropImage.sum() < 5000:
-        return (0,0)
+#(there may be a black dot on the screen hence the sum of 100000)\
+    if cropImage.sum() < 100_000:
+        return (1, cord)
     else:
         cropImage = np.rot90(cropImage, 0).T
         im = Image.fromarray(cropImage)
@@ -135,57 +164,95 @@ def handWrittenNumberData():
     pixels = toMatrix(im, pixels)
 
     original = Image.fromarray(pixels)
+    width, height = original.size
+    original = original.crop((30, 0, width, height))
+    original.show()
     #image is now black and white.
-
     pixelStartPos = 0
-    splitImages = []
+    lines = []
 
     while True:
-        im, newPixelStartPos = splitImage(original, pixelStartPos)
+        line, newPixelStartPos = getLine(original, pixelStartPos)
         pixelStartPos = newPixelStartPos + pixelStartPos
-        if im == 0:
+        if line == 0:
             break
+        elif line == 1:
+            pass
         else:
-            splitImages.append(im)
+            lines.append("para")
+            lines.append(line)
+
+
+    splitImages = []
+    for line in lines:
+        if line != "para":
+            pixelStartPos = 0
+
+            while True:
+                im, newPixelStartPos = splitImage(line, pixelStartPos)
+
+                pixelStartPos = newPixelStartPos + pixelStartPos
+                if newPixelStartPos > 300:
+                    splitImages.append("space")
+                if im == 0:
+                    break
+                elif im == 1:
+                    pass
+                else:
+                    splitImages.append(im)
+        else:
+            splitImages.append("para")
+
+#splitImage.append(Image.fromarray(np.array([0,0])))
 
     images = []
     for image in splitImages:
-        images.append(trimImage(image))
+        if image == "space":
+            images.append("space")
+        elif image == "para":
+            images.append("para")
+        else:
+            images.append(trimImage(image))
+
 
     #images are cropped to remove black rows and columns
-
     try:
-
         for x in range(len(images)):
-            rows, cols = images[x].size
-            if rows > cols:
-                factor = 20.0/rows
-                rows = 20
-                cols = int(round(cols*factor))
-                images[x] = images[x].resize((rows, cols))
-            else:
-                factor = 20.0/cols
-                cols = 20
-                rows = int(round(rows*factor))
-                images[x] = images[x].resize((rows, cols))
+            if images[x] != "space" and images[x] != "para":
+                rows, cols = images[x].size
+                if rows > cols:
+                    factor = 20.0/rows
+                    rows = 20
+                    cols = int(round(cols*factor))
+                    images[x] = images[x].resize((rows, cols))
+                else:
+                    factor = 20.0/cols
+                    cols = 20
+                    rows = int(round(rows*factor))
+                    images[x] = images[x].resize((rows, cols))
 
 
-            colsPadding = (int(math.ceil((28-cols)/2.0)), int(math.floor((28-cols)/2.0)))
-            rowsPadding = (int(math.ceil((28-rows)/2.0)), int(math.floor((28-rows)/2.0)))
+                colsPadding = (int(math.ceil((28-cols)/2.0)), int(math.floor((28-cols)/2.0)))
+                rowsPadding = (int(math.ceil((28-rows)/2.0)), int(math.floor((28-rows)/2.0)))
 
-            pixelArray = np.lib.pad(images[x], (colsPadding, rowsPadding), 'constant')
-            images[x] = Image.fromarray(pixelArray)
-            shiftTuple = getCenterOfMassShift(pixelArray)
-            shiftedImage = shift(images[x], shiftTuple)
-            images[x] = shiftedImage
+                pixelArray = np.lib.pad(images[x], (colsPadding, rowsPadding), 'constant')
+                images[x] = Image.fromarray(pixelArray)
+                shiftTuple = getCenterOfMassShift(pixelArray)
+                shiftedImage = shift(images[x], shiftTuple)
+                images[x] = shiftedImage
 
         # for x in range(len(images)):
         #     images[x].save('imageRecognition' + '/' + photoFolderName + '/' + 'formattedImages' +
         #         '/' + 'formattedImage' + str(x) + '.png')
         imagesPixels = []
         for image in images:
-            image.show()
-            imagesPixels.append(list(image.getdata()))
+            if image == "space":
+                imagesPixels.append("space")
+            elif image == "para":
+                imagesPixels.append("para")
+            else:
+                # image.show()
+                imagesPixels.append(list(image.getdata()))
 
 
         return imagesPixels
@@ -193,7 +260,8 @@ def handWrittenNumberData():
     except:
         print("the photo quality wasn't good enough to read try again...")
 
-        return 0
+        #error
+        return None
 
 
 
