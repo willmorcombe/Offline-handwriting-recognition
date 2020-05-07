@@ -21,7 +21,7 @@ def toMatrix(im, l):
 #returns the list of changed pixles
 def toGreyScale(pixels):
     for x in range(len(pixels)):
-        if pixels[x] > 110:
+        if pixels[x] > 80:
             pixels[x] = 0
         else:
             pixels[x] = 255
@@ -43,6 +43,11 @@ def splitImage(im, startPos):
     im = im.crop((startPos, 0, width, height)) # crops image depending on startPos
 
     pixels = toMatrix(im, list(im.getdata()))
+    p = np.asarray(pixels)
+    im = Image.fromarray(p)
+    im.show()
+    if p.sum() < 5000:
+        return (0, 0)
 
 # looking at the sum of each row of the image. If sum is == 0 then there is no image
 # so can ignore that part of the image. Its only interested when there is writing, and when
@@ -64,15 +69,15 @@ def splitImage(im, startPos):
             break
 
     cropImage = np.asarray(cropImage)
-
 # conditional for checking if there isn't a character in the image.
-#(there may be a black dot on the screen hence the sum of 1000)
-    if cropImage.sum() < 1000:
-        return (0, 0)
+#(there may be a black dot on the screen hence the sum of 1000)\
+
+    if cropImage.sum() < 5000:
+        return (0,0)
     else:
         cropImage = np.rot90(cropImage, 0).T
         im = Image.fromarray(cropImage)
-        return (im, x)
+        return (im, cord)
 
 # trims the cropped image to fit in a 20 x 20 box.
 # returns the cropped image
@@ -137,10 +142,11 @@ def handWrittenNumberData():
 
     while True:
         im, newPixelStartPos = splitImage(original, pixelStartPos)
+        pixelStartPos = newPixelStartPos + pixelStartPos
         if im == 0:
             break
-        pixelStartPos = newPixelStartPos + pixelStartPos
-        splitImages.append(im)
+        else:
+            splitImages.append(im)
 
     images = []
     for image in splitImages:

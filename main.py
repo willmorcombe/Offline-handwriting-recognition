@@ -15,7 +15,7 @@ from NeuralNetwork import NeuralNetwork
 import irs
 
 
-filename = "letterClassiferModel"
+filename = "letterClassiferModel400"
 foldername = "weights and labels data"
 doSave = False
 doTest = False
@@ -63,7 +63,7 @@ def test():
 
 
 
-nn = NeuralNetwork(784,[100],26, 0.1)
+nn = NeuralNetwork(784,[400],26, 0.1)
 
 if doSave:
 
